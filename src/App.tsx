@@ -1,0 +1,100 @@
+import { useState } from 'react';
+import { Sidebar } from './components/Sidebar';
+import { ModelViewer } from './components/ModelViewer';
+import { Dashboard } from './components/Dashboard';
+import { FileUpload } from './components/FileUpload';
+import { ModelLibrary } from './components/ModelLibrary';
+import { ArcGISMap } from './components/ArcGISMap';
+import { NotificationContainer } from './components/NotificationContainer';
+import { DigitalTwinModel, ViewType } from './types';
+import './test/notificationTest';
+
+function App() {
+  const [currentView, setCurrentView] = useState<ViewType>('viewer');
+  const [models, setModels] = useState<DigitalTwinModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState<DigitalTwinModel | null>(null);
+
+  const handleModelUpload = (model: DigitalTwinModel) => {
+    setModels(prev => [...prev, model]);
+    setSelectedModel(model);
+    setCurrentView('viewer');
+  };
+
+  const handleModelSelect = (model: DigitalTwinModel) => {
+    setSelectedModel(model);
+    setCurrentView('viewer');
+  };
+
+  const handleLocationSelect = (coordinates: { latitude: number; longitude: number }) => {
+    // Handle location selection from GIS map
+    console.log('Location selected:', coordinates);
+  };
+
+  const handleModelUpdate = (updatedModel: DigitalTwinModel) => {
+    setModels(prev => prev.map(model =>
+      model.id === updatedModel.id ? updatedModel : model
+    ));
+    if (selectedModel?.id === updatedModel.id) {
+      setSelectedModel(updatedModel);
+    }
+  };
+
+  const handleModelDelete = (modelToDelete: DigitalTwinModel) => {
+    setModels(prev => prev.filter(model => model.id !== modelToDelete.id));
+    if (selectedModel?.id === modelToDelete.id) {
+      setSelectedModel(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <div className="flex h-screen">
+        <Sidebar
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          modelCount={models.length}
+        />
+
+        <main className="flex-1 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-teal-500/5" />
+
+          {currentView === 'viewer' && (
+            <ModelViewer
+              model={selectedModel}
+              models={models}
+              onModelSelect={handleModelSelect}
+            />
+          )}
+          {currentView === 'gis' && (
+            <ArcGISMap
+              models={models}
+              selectedModel={selectedModel}
+              onModelSelect={handleModelSelect}
+              onLocationSelect={handleLocationSelect}
+              onModelUpdate={handleModelUpdate}
+              onModelDelete={handleModelDelete}
+            />
+          )}
+          {currentView === 'dashboard' && (
+            <Dashboard models={models} selectedModel={selectedModel} />
+          )}
+          {currentView === 'upload' && (
+            <FileUpload onModelUpload={handleModelUpload} />
+          )}
+          {currentView === 'library' && (
+            <ModelLibrary
+              models={models}
+              onModelSelect={handleModelSelect}
+              onModelDelete={handleModelDelete}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* Global Notification Container */}
+      <NotificationContainer />
+    </div>
+  );
+}
+
+export default App;

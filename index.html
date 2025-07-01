@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Twin 3D Application</title>
+    <!-- Load Calcite components and the JavaScript Maps SDK core API-->
+    <script
+    type="module"
+    src="https://js.arcgis.com/calcite-components/3.2.1/calcite.esm.js"></script>
+    <!-- ArcGIS API for JavaScript CSS -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css">
+    <!-- ArcGIS API for JavaScript -->
+    <script src="https://js.arcgis.com/4.33/"></script>
+    <!-- Load Map components -->
+    <script
+    type="module"
+    src="https://js.arcgis.com/4.33/map-components/"
+    ></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
