@@ -5,14 +5,14 @@ import {
   Upload,
   Library,
   Activity,
-  Settings,
   ChevronRight,
-  Map
+  Map,
+  AlertTriangle
 } from 'lucide-react';
 
 interface SidebarProps {
-  currentView: 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis';
-  onViewChange: (view: 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis') => void;
+  currentView: 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis' | 'faults';
+  onViewChange: (view: 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis' | 'faults') => void;
   modelCount: number;
 }
 
@@ -21,6 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, mod
     { id: 'viewer', label: '3D Viewer', icon: Box, description: 'Interactive 3D model viewer' },
     { id: 'gis', label: 'GIS Map', icon: Map, description: 'ArcGIS mapping & geospatial analysis' },
     { id: 'dashboard', label: 'Analytics', icon: BarChart3, description: 'Predictive analysis dashboard' },
+    { id: 'faults', label: 'Fault Detection', icon: AlertTriangle, description: 'Real-time fault detection & diagnostics' },
     { id: 'upload', label: 'Upload', icon: Upload, description: 'Upload new models' },
     { id: 'library', label: 'Library', icon: Library, description: `${modelCount} models available` }
   ];

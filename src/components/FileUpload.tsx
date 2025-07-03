@@ -17,9 +17,21 @@ import { generateId } from '../utils/helpers';
 
 export const FileUpload: React.FC<FileUploadProps> = ({ onModelUpload }) => {
   const [files, setFiles] = useState<UploadFile[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<Set<string>>(new Set()); // Track uploaded files
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles: UploadFile[] = acceptedFiles.map(file => ({
+    // Filter out files that are already being uploaded or have been uploaded
+    const filteredFiles = acceptedFiles.filter(file => {
+      const fileKey = `${file.name}-${file.size}`;
+      return !uploadedFiles.has(fileKey) && !files.some(f => f.file.name === file.name && f.file.size === file.size);
+    });
+
+    if (filteredFiles.length === 0) {
+      console.log('All selected files are already uploaded or being processed');
+      return;
+    }
+
+    const newFiles: UploadFile[] = filteredFiles.map(file => ({
       id: generateId(),
       file: file,
       progress: 0,
@@ -28,19 +40,27 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onModelUpload }) => {
 
     setFiles(prev => [...prev, ...newFiles]);
 
+    // Add to uploaded files tracking
+    const newFileKeys = filteredFiles.map(file => `${file.name}-${file.size}`);
+    setUploadedFiles(prev => new Set([...prev, ...newFileKeys]));
+
     // Simulate file upload with progress
     newFiles.forEach(uploadFile => {
       simulateUpload(uploadFile);
     });
-  }, []);
+  }, [files, uploadedFiles]);
 
   const simulateUpload = (uploadFile: UploadFile) => {
+    let modelUploaded = false; // Flag to prevent duplicate uploads
+
     const interval = setInterval(() => {
       setFiles(prev => prev.map(f => {
         if (f.id === uploadFile.id) {
           const newProgress = f.progress + Math.random() * 15;
-          if (newProgress >= 100) {
+          if (newProgress >= 100 && !modelUploaded) {
             clearInterval(interval);
+            modelUploaded = true; // Set flag to prevent duplicate calls
+
             // Create model object using the original file
             const model: DigitalTwinModel = {
               id: f.id,
@@ -60,6 +80,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onModelUpload }) => {
             onModelUpload(model);
 
             return { ...f, progress: 100, status: 'success' as const };
+          } else if (newProgress >= 100) {
+            // If already uploaded, just update progress without calling onModelUpload again
+            return { ...f, progress: 100, status: 'success' as const };
           }
           return { ...f, progress: newProgress };
         }
@@ -69,6 +92,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onModelUpload }) => {
   };
 
   const removeFile = (fileId: string) => {
+    // Find the file to remove and clean up tracking
+    const fileToRemove = files.find(f => f.id === fileId);
+    if (fileToRemove) {
+      const fileKey = `${fileToRemove.file.name}-${fileToRemove.file.size}`;
+      setUploadedFiles(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(fileKey);
+        return newSet;
+      });
+    }
     setFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
@@ -152,7 +185,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onModelUpload }) => {
           </div>
         ))}
       </div>
-
       {/* Upload Progress */}
       {files.length > 0 && (
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">

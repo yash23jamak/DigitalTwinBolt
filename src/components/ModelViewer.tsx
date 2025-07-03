@@ -1,5 +1,5 @@
 import React, { Suspense, useRef, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import {
   OrbitControls,
   PerspectiveCamera,
@@ -19,7 +19,7 @@ import {
   Layers
 } from 'lucide-react';
 import { DigitalTwinModel, ModelViewerProps, SelectedPart, LightingPreset } from '../types';
-import { LIGHTING_PRESETS, CAMERA_POSITIONS, GRID_SIZE, GRID_DIVISIONS, GRID_COLOR_PRIMARY, GRID_COLOR_SECONDARY, ROTATION_SPEED, ROTATION_AMPLITUDE } from '../utils/constants';
+import { LIGHTING_PRESETS, CAMERA_POSITIONS, GRID_SIZE, GRID_DIVISIONS, GRID_COLOR_PRIMARY, GRID_COLOR_SECONDARY } from '../utils/constants';
 import * as THREE from 'three';
 
 
@@ -29,22 +29,42 @@ const Model: React.FC<{
   onPartClick: (part: SelectedPart) => void;
   selectedPart: SelectedPart | null;
   wireframe: boolean;
-}> = ({ url, onPartClick, selectedPart, wireframe }) => {
+  onModelLoaded?: (boundingBox: THREE.Box3) => void;
+}> = ({ url, onPartClick, selectedPart, wireframe, onModelLoaded }) => {
   const { scene } = useGLTF(url);
   const meshRef = useRef<any>();
   const { camera, raycaster, pointer } = useThree();
+  const originalMaterials = useRef<Map<string, THREE.Material>>(new Map());
+  const modelLoadedRef = useRef(false);
+  const highlightedMeshRef = useRef<THREE.Mesh | null>(null);
 
-  // Process materials after loading to ensure proper color rendering
+  // Reset model loaded flag when URL changes
   React.useEffect(() => {
-    if (scene) {
+    modelLoadedRef.current = false;
+  }, [url]);
+
+  // Process materials and center model after loading
+  React.useEffect(() => {
+    if (scene && !modelLoadedRef.current) {
+      // Calculate bounding box for centering
+      const box = new THREE.Box3().setFromObject(scene);
+      const center = box.getCenter(new THREE.Vector3());
+
+      // Center the model at origin
+      scene.position.sub(center);
+
+      // Store original materials for highlighting
+      originalMaterials.current.clear();
+
       scene.traverse((child: any) => {
         if (child.isMesh) {
-          // Ensure materials are properly configured for color rendering
+          // Store original material for restoration
           if (child.material) {
-            // Handle both single materials and material arrays
             const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((material: any, index: number) => {
+              const key = `${child.uuid}_${index}`;
+              originalMaterials.current.set(key, material.clone());
 
-            materials.forEach((material: any) => {
               // Enable vertex colors if they exist
               if (child.geometry.attributes.color) {
                 material.vertexColors = true;
@@ -68,8 +88,15 @@ const Model: React.FC<{
           child.receiveShadow = true;
         }
       });
+
+      // Only call onModelLoaded once when model is first loaded
+      if (onModelLoaded) {
+        onModelLoaded(box);
+      }
+
+      modelLoadedRef.current = true;
     }
-  }, [scene]);
+  }, [scene, onModelLoaded]);
 
   // Handle wireframe mode
   React.useEffect(() => {
@@ -85,11 +112,8 @@ const Model: React.FC<{
     }
   }, [wireframe]);
 
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * ROTATION_SPEED) * ROTATION_AMPLITUDE;
-    }
-  });
+  // Removed automatic rotation for model stability
+  // useFrame can be used here for custom animations if needed
 
   // Handle click events on the model
   const handleClick = (event: any) => {
@@ -105,37 +129,134 @@ const Model: React.FC<{
       const intersection = intersects[0];
       const object = intersection.object as THREE.Mesh;
 
-      // Extract part information
+      console.log('Clicked object:', {
+        name: object.name,
+        uuid: object.uuid,
+        type: object.type,
+        material: object.material,
+        hasEmissive: object.material && 'emissive' in object.material,
+        hasColor: object.material && 'color' in object.material
+      });
+
+      // Store reference to highlighted mesh
+      highlightedMeshRef.current = object;
+
+      // Extract part information with UUID for precise identification
       const partInfo: SelectedPart = {
-        name: object.name || object.parent?.name || 'Unnamed Part',
+        name: object.name || object.parent?.name || `Part_${object.uuid.slice(0, 8)}`,
         type: object.type || 'Mesh',
         material: object.material ? (object.material as any).name || 'Default Material' : 'No Material',
         position: intersection.point,
         boundingBox: new THREE.Box3().setFromObject(object),
-        userData: object.userData
+        userData: {
+          ...object.userData,
+          uuid: object.uuid,
+          parentUuid: object.parent?.uuid
+        }
       };
 
+      console.log('Part selected:', partInfo);
       onPartClick(partInfo);
     }
   };
 
   // Apply highlighting to selected part
   React.useEffect(() => {
-    if (meshRef.current && selectedPart) {
+    if (meshRef.current) {
       meshRef.current.traverse((child: any) => {
-        if (child.isMesh) {
-          // Reset all materials first
-          if (child.material && child.material.emissive) {
-            child.material.emissive.setHex(0x000000);
-          }
+        if (child.isMesh && child.material) {
+          const materials = Array.isArray(child.material) ? child.material : [child.material];
 
-          // Highlight selected part
-          if (child.name === selectedPart.name ||
-            (child.parent && child.parent.name === selectedPart.name)) {
-            if (child.material && child.material.emissive) {
-              child.material.emissive.setHex(0x444444);
+          materials.forEach((material: any) => {
+
+            if (selectedPart &&
+              (child.uuid === selectedPart.userData?.uuid ||
+                child.name === selectedPart.name ||
+                (child.parent && child.parent.name === selectedPart.name))) {
+
+              // Create highlighting effect - multiple approaches for different material types
+              console.log('Highlighting part:', selectedPart.name, 'Material type:', material.type);
+
+              // Store original properties if not already stored
+              if (!material.userData.isHighlighted) {
+                material.userData.originalColor = material.color ? material.color.clone() : null;
+                material.userData.originalEmissive = material.emissive ? material.emissive.clone() : null;
+                material.userData.originalEmissiveIntensity = material.emissiveIntensity || 0;
+                material.userData.originalOpacity = material.opacity || 1;
+                material.userData.originalTransparent = material.transparent || false;
+                material.userData.isHighlighted = true;
+              }
+
+              // Method 1: Emissive highlighting (works for Standard/Physical materials)
+              if (material.emissive) {
+                material.emissive.setHex(0x0066ff);
+                if ('emissiveIntensity' in material) {
+                  material.emissiveIntensity = 0.8;
+                }
+              }
+
+              // Method 2: Color brightening/tinting (works for most materials)
+              if (material.color) {
+                // Apply bright blue tint
+                const originalColor = material.userData.originalColor;
+                if (originalColor) {
+                  // Mix original color with blue highlight
+                  material.color.setRGB(
+                    Math.min(1, originalColor.r + 0.3),
+                    Math.min(1, originalColor.g + 0.3),
+                    Math.min(1, originalColor.b + 0.8)
+                  );
+                } else {
+                  material.color.setHex(0x4488ff);
+                }
+              }
+
+              // Method 3: Make slightly transparent for glow effect
+              if ('transparent' in material && 'opacity' in material) {
+                material.transparent = true;
+                material.opacity = 0.9;
+              }
+
+            } else {
+              // Reset all highlighting effects if this material was highlighted
+              if (material.userData.isHighlighted) {
+
+                // Reset emissive
+                if (material.emissive && material.userData.originalEmissive) {
+                  material.emissive.copy(material.userData.originalEmissive);
+                } else if (material.emissive) {
+                  material.emissive.setHex(0x000000);
+                }
+
+                if ('emissiveIntensity' in material) {
+                  material.emissiveIntensity = material.userData.originalEmissiveIntensity || 0;
+                }
+
+                // Reset color
+                if (material.color && material.userData.originalColor) {
+                  material.color.copy(material.userData.originalColor);
+                }
+
+                // Reset opacity and transparency
+                if ('opacity' in material) {
+                  material.opacity = material.userData.originalOpacity || 1;
+                }
+                if ('transparent' in material) {
+                  material.transparent = material.userData.originalTransparent || false;
+                }
+
+                // Clear highlight flags and stored properties
+                delete material.userData.isHighlighted;
+                delete material.userData.originalColor;
+                delete material.userData.originalEmissive;
+                delete material.userData.originalEmissiveIntensity;
+                delete material.userData.originalOpacity;
+                delete material.userData.originalTransparent;
+              }
             }
-          }
+
+            material.needsUpdate = true;
+          });
         }
       });
     }
@@ -168,11 +289,43 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
   const [selectedPart, setSelectedPart] = useState<SelectedPart | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const cameraRef = useRef<any>();
+  const orbitControlsRef = useRef<any>();
+
+  const fitCameraToModel = (boundingBox: THREE.Box3) => {
+    if (!cameraRef.current) return;
+
+    const size = boundingBox.getSize(new THREE.Vector3());
+    const center = boundingBox.getCenter(new THREE.Vector3());
+
+    // Calculate the distance needed to fit the model in view
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = cameraRef.current.fov * (Math.PI / 180); // Convert to radians
+    const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 1.2; // Add 20% padding
+
+    // Position camera at an angle for better view
+    const direction = new THREE.Vector3(1, 1, 1).normalize();
+    const position = center.clone().add(direction.multiplyScalar(distance));
+
+    cameraRef.current.position.copy(position);
+    cameraRef.current.lookAt(center);
+
+    // Update orbit controls target
+    if (orbitControlsRef.current) {
+      orbitControlsRef.current.target.copy(center);
+      orbitControlsRef.current.update();
+    }
+  };
 
   const resetCamera = () => {
     if (cameraRef.current) {
       cameraRef.current.position.set(...CAMERA_POSITIONS.DEFAULT);
       cameraRef.current.lookAt(0, 0, 0);
+
+      // Reset orbit controls target
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.target.set(0, 0, 0);
+        orbitControlsRef.current.update();
+      }
     }
   };
 
@@ -332,8 +485,9 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
         <div className="absolute top-6 right-6 mt-80 z-10 bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 w-80">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
-              <Layers className="w-5 h-5 text-green-400" />
+              <Layers className="w-5 h-5 text-blue-400" />
               <h3 className="font-medium text-white">Selected Part</h3>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" title="Part highlighted in blue"></div>
             </div>
             <button
               onClick={clearSelection}
@@ -428,6 +582,7 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
                 onPartClick={handlePartClick}
                 selectedPart={selectedPart}
                 wireframe={wireframe}
+                onModelLoaded={fitCameraToModel}
               />
               <ContactShadows
                 position={[0, -1, 0]}
@@ -475,11 +630,13 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
 
           {/* Controls */}
           <OrbitControls
+            ref={orbitControlsRef}
             enablePan={true}
             enableZoom={true}
             enableRotate={true}
             autoRotate={false}
             dampingFactor={0.05}
+            enableDamping={true}
           />
 
           {/* Performance Stats */}

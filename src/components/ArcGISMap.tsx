@@ -295,7 +295,7 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
   };
 
   const handleBasemapChange = (basemap: MapSettings['basemap']) => {
-    setMapSettings(prev => ({ ...prev, basemap }));
+    setMapSettings((prev: MapSettings): MapSettings => ({ ...prev, basemap }));
 
     // Update the map basemap immediately if map is loaded
     if (mapRef2.current && !isDestroyedRef.current) {
@@ -304,7 +304,7 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
   };
 
   const toggleViewType = () => {
-    setMapSettings(prev => ({
+    setMapSettings((prev: MapSettings) => ({
       ...prev,
       viewType: prev.viewType === '2d' ? '3d' : '2d'
     }));

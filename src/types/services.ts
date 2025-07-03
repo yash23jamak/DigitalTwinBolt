@@ -106,6 +106,116 @@ export interface SyncEvent {
   timestamp: Date;
 }
 
+// Fault Detection Types
+export interface FaultDetectionRule {
+  id: string;
+  name: string;
+  modelId?: string; // If null, applies to all models
+  faultType: 'performance' | 'structural' | 'environmental' | 'connectivity' | 'data_quality';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  conditions: FaultCondition[];
+  isActive: boolean;
+  description: string;
+  createdAt: Date;
+  lastTriggered?: Date;
+}
+
+export interface FaultCondition {
+  parameter: string; // e.g., 'temperature', 'vibration', 'cpu_usage', 'memory_usage'
+  operator: 'gt' | 'lt' | 'eq' | 'ne' | 'between' | 'outside';
+  value: number | [number, number];
+  duration?: number; // Minimum duration in seconds before triggering
+}
+
+export interface DetectedFault {
+  id: string;
+  ruleId: string;
+  modelId: string;
+  faultType: 'performance' | 'structural' | 'environmental' | 'connectivity' | 'data_quality';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  description: string;
+  detectedAt: Date;
+  resolvedAt?: Date;
+  status: 'active' | 'acknowledged' | 'resolved' | 'false_positive';
+  affectedComponents: string[];
+  diagnosticData: DiagnosticData;
+  coordinates?: GeospatialCoordinates;
+  recommendedActions: string[];
+}
+
+export interface DiagnosticData {
+  parameters: Record<string, number>;
+  trends: Record<string, number[]>; // Historical data for trending
+  correlations: Array<{
+    parameter: string;
+    correlation: number;
+    significance: 'low' | 'medium' | 'high';
+  }>;
+  rootCauseAnalysis?: {
+    primaryCause: string;
+    contributingFactors: string[];
+    confidence: number; // 0-1
+  };
+}
+
+export interface ModelHealthStatus {
+  modelId: string;
+  overallHealth: 'healthy' | 'warning' | 'critical' | 'offline';
+  healthScore: number; // 0-100
+  lastUpdated: Date;
+  components: ComponentHealth[];
+  activeFaults: DetectedFault[];
+  performanceMetrics: PerformanceMetrics;
+  predictiveInsights: PredictiveInsight[];
+}
+
+export interface ComponentHealth {
+  name: string;
+  type: 'sensor' | 'actuator' | 'processor' | 'network' | 'storage';
+  status: 'healthy' | 'warning' | 'critical' | 'offline';
+  healthScore: number;
+  lastChecked: Date;
+  metrics: Record<string, number>;
+}
+
+export interface PerformanceMetrics {
+  cpuUsage: number;
+  memoryUsage: number;
+  networkLatency: number;
+  dataProcessingRate: number;
+  errorRate: number;
+  uptime: number; // in hours
+}
+
+export interface PredictiveInsight {
+  type: 'maintenance' | 'failure' | 'optimization' | 'capacity';
+  title: string;
+  description: string;
+  probability: number; // 0-1
+  timeframe: string; // e.g., "within 7 days"
+  impact: 'low' | 'medium' | 'high' | 'critical';
+  recommendedActions: string[];
+}
+
+export interface FaultDetectionStatistics {
+  totalModels: number;
+  healthyModels: number;
+  modelsWithWarnings: number;
+  criticalModels: number;
+  offlineModels: number;
+  totalFaults: number;
+  activeFaults: number;
+  resolvedFaults: number;
+  averageResolutionTime: number; // in hours
+  faultsByType: Record<string, number>;
+  faultsBySeverity: Record<string, number>;
+  mtbf: number; // Mean Time Between Failures in hours
+  mttr: number; // Mean Time To Repair in hours
+}
+
 // Callback Types
 export type DataCallback = (data: SensorData[]) => void;
 export type AlertCallback = (alert: Alert) => void;
+export type FaultCallback = (fault: DetectedFault) => void;
+export type HealthStatusCallback = (status: ModelHealthStatus) => void;

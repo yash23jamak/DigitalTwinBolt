@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ModelViewer } from './components/ModelViewer';
 import { Dashboard } from './components/Dashboard';
+import { FaultDetectionDashboard } from './components/FaultDetectionDashboard';
 import { FileUpload } from './components/FileUpload';
 import { ModelLibrary } from './components/ModelLibrary';
 import { ArcGISMap } from './components/ArcGISMap';
@@ -15,6 +16,17 @@ function App() {
   const [selectedModel, setSelectedModel] = useState<DigitalTwinModel | null>(null);
 
   const handleModelUpload = (model: DigitalTwinModel) => {
+    // Check if model already exists to prevent duplicates
+    const existingModel = models.find(m =>
+      m.id === model.id ||
+      (m.name === model.name && m.size === model.size)
+    );
+
+    if (existingModel) {
+      console.log('Model already exists, skipping duplicate:', model.name);
+      return;
+    }
+
     setModels(prev => [...prev, model]);
     setSelectedModel(model);
     setCurrentView('viewer');
@@ -56,7 +68,8 @@ function App() {
         />
 
         <main className="flex-1 overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-teal-500/5" />
+          {/* TODO: Commented as of now no use
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-teal-500/5" /> */}
 
           {currentView === 'viewer' && (
             <ModelViewer
@@ -77,6 +90,9 @@ function App() {
           )}
           {currentView === 'dashboard' && (
             <Dashboard models={models} selectedModel={selectedModel} />
+          )}
+          {currentView === 'faults' && (
+            <FaultDetectionDashboard models={models} selectedModel={selectedModel} />
           )}
           {currentView === 'upload' && (
             <FileUpload onModelUpload={handleModelUpload} />
