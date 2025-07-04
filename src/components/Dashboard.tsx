@@ -22,7 +22,8 @@ import {
   Clock,
   Database
 } from 'lucide-react';
-import { DigitalTwinModel } from '../App';
+import { DigitalTwinModel } from '../types';
+import { palette, responsive } from '../styles/palette';
 
 interface DashboardProps {
   models: DigitalTwinModel[];
@@ -103,25 +104,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ models, selectedModel }) =
   ];
 
   return (
-    <div className="h-full overflow-auto p-6 space-y-6">
+    <div className="h-full overflow-auto p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
             Predictive Analytics Dashboard
           </h1>
-          <p className="text-slate-400 mt-1">Real-time insights and performance monitoring</p>
+          <p className="text-slate-400 mt-1 text-sm md:text-base">Real-time insights and performance monitoring</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-white">{models.length}</div>
-          <div className="text-sm text-slate-400">Active Models</div>
+          <div className="text-xl md:text-2xl font-bold text-white">{models.length}</div>
+          <div className="text-xs md:text-sm text-slate-400">Active Models</div>
         </div>
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {predictiveMetrics.map((metric, index) => (
-          <div key={index} className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
+          <div key={index} className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
               <div className={`p-2 rounded-lg bg-gradient-to-r ${
                 metric.color.includes('green') ? 'from-green-500/20 to-emerald-500/20' :
@@ -129,93 +130,100 @@ export const Dashboard: React.FC<DashboardProps> = ({ models, selectedModel }) =
                 metric.color.includes('teal') ? 'from-teal-500/20 to-blue-500/20' :
                 'from-purple-500/20 to-pink-500/20'
               }`}>
-                <metric.icon className={`w-5 h-5 ${metric.color}`} />
+                <metric.icon className={`w-4 h-4 md:w-5 md:h-5 ${metric.color}`} />
               </div>
-              <div className={`flex items-center space-x-1 text-sm ${
+              <div className={`flex items-center space-x-1 text-xs md:text-sm ${
                 metric.trend === 'up' ? 'text-green-400' : 'text-blue-400'
               }`}>
-                <TrendingUp className={`w-4 h-4 ${metric.trend === 'down' ? 'rotate-180' : ''}`} />
+                <TrendingUp className={`w-3 h-3 md:w-4 md:h-4 ${metric.trend === 'down' ? 'rotate-180' : ''}`} />
                 <span>{metric.change}</span>
               </div>
             </div>
-            <div className="text-2xl font-bold text-white mb-1">{metric.value}</div>
-            <div className="text-sm text-slate-400">{metric.title}</div>
+            <div className="text-xl md:text-2xl font-bold text-white mb-1">{metric.value}</div>
+            <div className="text-xs md:text-sm text-slate-400">{metric.title}</div>
           </div>
         ))}
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
         {/* Performance Chart */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-          <h3 className="text-xl font-semibold text-white mb-4">System Performance</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="time" stroke="#64748B" />
-              <YAxis stroke="#64748B" />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: '#1E293B',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  color: '#FFF'
-                }}
-              />
-              <Line type="monotone" dataKey="cpu" stroke="#3B82F6" strokeWidth={2} />
-              <Line type="monotone" dataKey="memory" stroke="#10B981" strokeWidth={2} />
-              <Line type="monotone" dataKey="gpu" stroke="#F59E0B" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-slate-700/50">
+          <h3 className="text-lg md:text-xl font-semibold text-white mb-4">System Performance</h3>
+          <div className="h-64 md:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="time" stroke="#64748B" fontSize={12} />
+                <YAxis stroke="#64748B" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: '#1E293B',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    color: '#FFF',
+                    fontSize: '12px'
+                  }}
+                />
+                <Line type="monotone" dataKey="cpu" stroke="#3B82F6" strokeWidth={2} />
+                <Line type="monotone" dataKey="memory" stroke="#10B981" strokeWidth={2} />
+                <Line type="monotone" dataKey="gpu" stroke="#F59E0B" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Model Complexity */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-          <h3 className="text-xl font-semibold text-white mb-4">Model Complexity Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={modelComplexityData}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {modelComplexityData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1E293B',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  color: '#FFF'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-slate-700/50">
+          <h3 className="text-lg md:text-xl font-semibold text-white mb-4">Model Complexity Distribution</h3>
+          <div className="h-64 md:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={modelComplexityData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelStyle={{ fontSize: '12px', fill: '#FFF' }}
+                >
+                  {modelComplexityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1E293B',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    color: '#FFF',
+                    fontSize: '12px'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
       {/* Alerts and Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
         {/* Alerts */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-          <h3 className="text-xl font-semibold text-white mb-4">System Alerts</h3>
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-slate-700/50">
+          <h3 className="text-lg md:text-xl font-semibold text-white mb-4">System Alerts</h3>
           <div className="space-y-3">
             {alerts.map((alert, index) => (
               <div key={index} className="flex items-start space-x-3 p-3 bg-slate-700/30 rounded-lg">
-                <div className={`p-1 rounded-full ${
+                <div className={`p-1 rounded-full flex-shrink-0 ${
                   alert.type === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
                   alert.type === 'success' ? 'bg-green-500/20 text-green-400' :
                   'bg-blue-500/20 text-blue-400'
                 }`}>
-                  <alert.icon className="w-4 h-4" />
+                  <alert.icon className="w-3 h-3 md:w-4 md:h-4" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="text-sm text-white">{alert.message}</div>
                   <div className="text-xs text-slate-400 mt-1">{alert.time}</div>
                 </div>
@@ -225,15 +233,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ models, selectedModel }) =
         </div>
 
         {/* Model Statistics */}
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-          <h3 className="text-xl font-semibold text-white mb-4">Model Statistics</h3>
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-slate-700/50">
+          <h3 className="text-lg md:text-xl font-semibold text-white mb-4">Model Statistics</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-              <span className="text-slate-400">Total Models</span>
+              <span className="text-slate-400 text-sm md:text-base">Total Models</span>
               <span className="text-white font-semibold">{models.length}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-              <span className="text-slate-400">Average Size</span>
+              <span className="text-slate-400 text-sm md:text-base">Average Size</span>
               <span className="text-white font-semibold">
                 {models.length > 0 
                   ? `${(models.reduce((acc, m) => acc + m.size, 0) / models.length / 1024 / 1024).toFixed(1)} MB`
@@ -242,13 +250,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ models, selectedModel }) =
               </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-              <span className="text-slate-400">GLTF Models</span>
+              <span className="text-slate-400 text-sm md:text-base">GLTF Models</span>
               <span className="text-white font-semibold">
                 {models.filter(m => m.type === 'gltf').length}
               </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
-              <span className="text-slate-400">BIM Models</span>
+              <span className="text-slate-400 text-sm md:text-base">BIM Models</span>
               <span className="text-white font-semibold">
                 {models.filter(m => m.type === 'bim').length}
               </span>

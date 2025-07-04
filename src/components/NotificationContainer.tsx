@@ -9,17 +9,16 @@ import {
 } from 'lucide-react';
 import { Notification } from '../types';
 import { notificationService } from '../services/notificationService';
+import { palette, responsive } from '../styles/palette';
 
 export const NotificationContainer: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    // Subscribe to notification updates
     const unsubscribe = notificationService.subscribe((notification) => {
       setNotifications(prev => [...prev, notification]);
     });
 
-    // Load existing notifications
     setNotifications(notificationService.getNotifications());
 
     return unsubscribe;
@@ -33,15 +32,15 @@ export const NotificationContainer: React.FC = () => {
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
+        return <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-green-400" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-400" />;
+        return <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-red-400" />;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-yellow-400" />;
+        return <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" />;
       case 'info':
-        return <Info className="w-5 h-5 text-blue-400" />;
+        return <Info className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />;
       default:
-        return <Info className="w-5 h-5 text-blue-400" />;
+        return <Info className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />;
     }
   };
 
@@ -65,13 +64,13 @@ export const NotificationContainer: React.FC = () => {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+    <div className="fixed top-4 right-4 z-50 space-y-2 w-80 sm:w-96 max-w-sm">
       {notifications.map((notification) => (
         <div
           key={notification.id}
           className={`
             ${getNotificationStyles(notification.type)}
-            backdrop-blur-sm rounded-xl border p-4 shadow-lg
+            backdrop-blur-sm rounded-xl border p-3 md:p-4 shadow-lg
             animate-in slide-in-from-right-full duration-300
             hover:shadow-xl transition-all
           `}
@@ -82,17 +81,17 @@ export const NotificationContainer: React.FC = () => {
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-white mb-1">
+              <div className="font-medium text-white mb-1 text-sm md:text-base">
                 {notification.title}
               </div>
-              <div className="text-sm opacity-90">
+              <div className="text-xs md:text-sm opacity-90">
                 {notification.message}
               </div>
 
               {notification.action && (
                 <button
                   onClick={notification.action.onClick}
-                  className="mt-2 inline-flex items-center space-x-1 text-sm font-medium hover:underline"
+                  className="mt-2 inline-flex items-center space-x-1 text-xs md:text-sm font-medium hover:underline"
                 >
                   <span>{notification.action.label}</span>
                   <ExternalLink className="w-3 h-3" />
@@ -105,7 +104,7 @@ export const NotificationContainer: React.FC = () => {
               className="flex-shrink-0 p-1 rounded-lg hover:bg-white/10 transition-colors"
               title="Dismiss"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3 h-3 md:w-4 md:h-4" />
             </button>
           </div>
 
@@ -122,7 +121,6 @@ export const NotificationContainer: React.FC = () => {
           )}
         </div>
       ))}
-
     </div>
   );
 };

@@ -1,8 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-
-// ArcGIS CDN loader
 import { loadArcGISModules, ArcGISModules, addMapWidgets } from '../utils/arcgisLoader';
-
 import { ArcGISMapProps, MapSettings } from '../types';
 import { GeospatialModelManager } from './GeospatialModelManager';
 import { ViewSyncControls } from './ViewSyncControls';
@@ -16,8 +13,7 @@ import { layerManagementService } from '../services/layerManagementService';
 import { identifyService } from '../services/identifyService';
 import { notificationService } from '../services/notificationService';
 import { DEFAULT_MAP_CENTER, DEFAULT_SCENE_CAMERA } from '../utils/constants';
-
-
+import { palette, responsive } from '../styles/palette';
 
 export const ArcGISMap: React.FC<ArcGISMapProps> = ({
   models,
@@ -43,33 +39,28 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
     showAnalysis: false
   });
 
-  // Cleanup function
   const cleanup = useCallback(() => {
     if (isDestroyedRef.current) return;
 
     isDestroyedRef.current = true;
 
     try {
-      // Clear graphics layer
       if (graphicsLayerRef.current) {
         graphicsLayerRef.current.removeAll();
         graphicsLayerRef.current = null;
       }
 
-      // Destroy view
       if (viewRef.current) {
         viewRef.current.destroy();
         viewRef.current = null;
       }
 
-      // Clear map reference
       mapRef2.current = null;
     } catch (error) {
       console.error('Error during cleanup:', error);
     }
   }, []);
 
-  // Sync service integration
   useEffect(() => {
     const handleMapClick = (coordinates: { latitude: number; longitude: number }) => {
       const nearbyModels = mapModelSyncService.findNearbyModels(coordinates, models, 500);
@@ -77,16 +68,13 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
       onLocationSelect(coordinates);
     };
 
-    // Simulate map click handling (replace with actual ArcGIS click handler)
     const mapElement = mapRef.current;
     if (mapElement && !isDestroyedRef.current) {
       const clickHandler = (event: MouseEvent) => {
-        // This is a placeholder - in real implementation, convert screen coordinates to geo coordinates
         const rect = mapElement.getBoundingClientRect();
         const x = (event.clientX - rect.left) / rect.width;
         const y = (event.clientY - rect.top) / rect.height;
 
-        // Convert to approximate coordinates (placeholder calculation)
         const lat = 34.0522 + (0.5 - y) * 0.1;
         const lng = -118.2437 + (x - 0.5) * 0.1;
 
@@ -102,7 +90,6 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
     }
   }, [models, onLocationSelect]);
 
-  // Initialize ArcGIS Map
   useEffect(() => {
     if (!mapRef.current || isInitializingRef.current || isDestroyedRef.current) return;
 
@@ -112,7 +99,6 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
         isDestroyedRef.current = false;
         setIsLoading(true);
 
-        // Load ArcGIS modules
         const modules = await loadArcGISModules();
         if (isDestroyedRef.current) return;
 
@@ -120,19 +106,16 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
 
         const { Map: EsriMap, MapView, SceneView, GraphicsLayer } = modules;
 
-        // Create the map with the selected basemap
         const map = new EsriMap({
           basemap: mapSettings.basemap
         });
 
-        // Create graphics layer for model markers
         const modelsLayer = new GraphicsLayer({
           title: 'Digital Twin Models'
         });
         map.add(modelsLayer);
         graphicsLayerRef.current = modelsLayer;
 
-        // Create the appropriate view (2D or 3D)
         const view = mapSettings.viewType === '3d'
           ? new SceneView({
             container: mapRef.current!,
@@ -161,7 +144,6 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
         viewRef.current = view;
         mapRef2.current = map;
 
-        // Add click handler for location selection
         interface MapClickEvent {
           mapPoint: {
             longitude: number;
@@ -183,7 +165,6 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
           }
         });
 
-        // Wait for view to be ready
         await view.when();
 
         if (isDestroyedRef.current) {
@@ -191,11 +172,9 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
           return;
         }
 
-        // Initialize services
         layerManagementService.initialize(map, view);
         identifyService.initialize(view);
 
-        // Add widgets
         await addMapWidgets(view, modules);
 
         setIsLoading(false);
@@ -223,17 +202,14 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
     return cleanup;
   }, [mapSettings.basemap, mapSettings.viewType, cleanup]);
 
-  // Add model markers to map
   useEffect(() => {
     if (!graphicsLayerRef.current || !models.length || !arcgisModules || isDestroyedRef.current) return;
 
     const { Point, SimpleMarkerSymbol, Graphic } = arcgisModules;
 
     try {
-      // Clear existing graphics
       graphicsLayerRef.current.removeAll();
 
-      // Add model markers to the graphics layer
       models.forEach(model => {
         if (model.coordinates && !isDestroyedRef.current) {
           const point = new Point({
@@ -241,7 +217,6 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
             latitude: model.coordinates.latitude
           });
 
-          // Create symbol if SimpleMarkerSymbol is available, otherwise use basic symbol
           const symbol = SimpleMarkerSymbol ? new SimpleMarkerSymbol({
             color: selectedModel?.id === model.id ? [255, 0, 0] : [0, 100, 255],
             size: selectedModel?.id === model.id ? 12 : 8,
@@ -297,7 +272,6 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
   const handleBasemapChange = (basemap: MapSettings['basemap']) => {
     setMapSettings((prev: MapSettings): MapSettings => ({ ...prev, basemap }));
 
-    // Update the map basemap immediately if map is loaded
     if (mapRef2.current && !isDestroyedRef.current) {
       mapRef2.current.basemap = basemap;
     }
@@ -309,8 +283,6 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
       viewType: prev.viewType === '2d' ? '3d' : '2d'
     }));
   };
-
-
 
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50' : 'h-full'} bg-slate-900`}>
@@ -330,49 +302,52 @@ export const ArcGISMap: React.FC<ArcGISMapProps> = ({
         className="w-full h-full"
         style={{ minHeight: '400px' }}
       >
-        {/* Loading State */}
         <MapLoadingState isLoading={isLoading} viewType={mapSettings.viewType} />
-        {/* ArcGIS Map will be rendered here */}
       </div>
 
-      {/* View Sync Controls */}
-      <div className="absolute top-4 right-4 z-10 w-80 mt-20">
-        <ViewSyncControls
-          models={models}
-          selectedModel={selectedModel}
-          currentView="gis"
-          onModelSelect={onModelSelect}
-        />
-      </div>
+      {/* Responsive Panels */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* View Sync Controls - Top Right */}
+        <div className="absolute top-4 right-4 z-10 w-72 lg:w-80 mt-16 md:mt-20 pointer-events-auto">
+          <ViewSyncControls
+            models={models}
+            selectedModel={selectedModel}
+            currentView="gis"
+            onModelSelect={onModelSelect}
+          />
+        </div>
 
-      {/* Spatial Analysis Tools */}
-      <div className="absolute top-4 right-4 z-10 w-80 mt-96">
-        <SpatialAnalysisTools
-          models={models}
-          selectedModel={selectedModel}
-          onLocationSelect={onLocationSelect}
-        />
-      </div>
+        {/* Spatial Analysis Tools - Right Side */}
+        <div className="absolute top-4 right-4 z-10 w-72 lg:w-80 mt-80 md:mt-96 pointer-events-auto">
+          <SpatialAnalysisTools
+            models={models}
+            selectedModel={selectedModel}
+            onLocationSelect={onLocationSelect}
+          />
+        </div>
 
-      {/* Geospatial Model Manager */}
-      <div className="absolute bottom-4 left-4 z-10 w-96 max-h-96 overflow-y-auto">
-        <GeospatialModelManager
-          models={models}
-          selectedModel={selectedModel}
-          onModelUpdate={onModelUpdate}
-        />
-      </div>
+        {/* Geospatial Model Manager - Bottom Left */}
+        <div className="absolute bottom-4 left-4 z-10 w-80 lg:w-96 max-h-80 lg:max-h-96 overflow-y-auto pointer-events-auto">
+          <GeospatialModelManager
+            models={models}
+            selectedModel={selectedModel}
+            onModelUpdate={onModelUpdate}
+          />
+        </div>
 
-      {/* Real-time Data Visualization */}
-      <div className="absolute top-4 left-4 z-10 w-80">
-        <RealTimeDataVisualization
-          models={models}
-          selectedModel={selectedModel}
-        />
-      </div>
+        {/* Real-time Data Visualization - Top Left */}
+        <div className="absolute top-4 left-4 z-10 w-72 lg:w-80 pointer-events-auto">
+          <RealTimeDataVisualization
+            models={models}
+            selectedModel={selectedModel}
+          />
+        </div>
 
-      {/* Model Info Panel */}
-      <ModelInfoPanel selectedModel={selectedModel} />
+        {/* Model Info Panel - Bottom Right */}
+        <div className="absolute bottom-4 right-4 z-10 pointer-events-auto">
+          <ModelInfoPanel selectedModel={selectedModel} />
+        </div>
+      </div>
     </div>
   );
 };

@@ -20,9 +20,8 @@ import {
 } from 'lucide-react';
 import { DigitalTwinModel, ModelViewerProps, SelectedPart, LightingPreset } from '../types';
 import { LIGHTING_PRESETS, CAMERA_POSITIONS, GRID_SIZE, GRID_DIVISIONS, GRID_COLOR_PRIMARY, GRID_COLOR_SECONDARY } from '../utils/constants';
+import { palette, responsive } from '../styles/palette';
 import * as THREE from 'three';
-
-
 
 const Model: React.FC<{
   url: string;
@@ -38,39 +37,31 @@ const Model: React.FC<{
   const modelLoadedRef = useRef(false);
   const highlightedMeshRef = useRef<THREE.Mesh | null>(null);
 
-  // Reset model loaded flag when URL changes
   React.useEffect(() => {
     modelLoadedRef.current = false;
   }, [url]);
 
-  // Process materials and center model after loading
   React.useEffect(() => {
     if (scene && !modelLoadedRef.current) {
-      // Calculate bounding box for centering
       const box = new THREE.Box3().setFromObject(scene);
       const center = box.getCenter(new THREE.Vector3());
 
-      // Center the model at origin
       scene.position.sub(center);
 
-      // Store original materials for highlighting
       originalMaterials.current.clear();
 
       scene.traverse((child: any) => {
         if (child.isMesh) {
-          // Store original material for restoration
           if (child.material) {
             const materials = Array.isArray(child.material) ? child.material : [child.material];
             materials.forEach((material: any, index: number) => {
               const key = `${child.uuid}_${index}`;
               originalMaterials.current.set(key, material.clone());
 
-              // Enable vertex colors if they exist
               if (child.geometry.attributes.color) {
                 material.vertexColors = true;
               }
 
-              // Ensure proper color space handling
               if (material.map) {
                 material.map.colorSpace = THREE.SRGBColorSpace;
               }
@@ -78,18 +69,15 @@ const Model: React.FC<{
                 material.emissiveMap.colorSpace = THREE.SRGBColorSpace;
               }
 
-              // Force material update
               material.needsUpdate = true;
             });
           }
 
-          // Enable shadow casting and receiving
           child.castShadow = true;
           child.receiveShadow = true;
         }
       });
 
-      // Only call onModelLoaded once when model is first loaded
       if (onModelLoaded) {
         onModelLoaded(box);
       }
@@ -98,7 +86,6 @@ const Model: React.FC<{
     }
   }, [scene, onModelLoaded]);
 
-  // Handle wireframe mode
   React.useEffect(() => {
     if (meshRef.current) {
       meshRef.current.traverse((child: any) => {
@@ -112,17 +99,11 @@ const Model: React.FC<{
     }
   }, [wireframe]);
 
-  // Removed automatic rotation for model stability
-  // useFrame can be used here for custom animations if needed
-
-  // Handle click events on the model
   const handleClick = (event: any) => {
     event.stopPropagation();
 
-    // Update raycaster with current mouse position
     raycaster.setFromCamera(pointer, camera);
 
-    // Find intersections with the model
     const intersects = raycaster.intersectObject(meshRef.current, true);
 
     if (intersects.length > 0) {
@@ -138,10 +119,8 @@ const Model: React.FC<{
         hasColor: object.material && 'color' in object.material
       });
 
-      // Store reference to highlighted mesh
       highlightedMeshRef.current = object;
 
-      // Extract part information with UUID for precise identification
       const partInfo: SelectedPart = {
         name: object.name || object.parent?.name || `Part_${object.uuid.slice(0, 8)}`,
         type: object.type || 'Mesh',
@@ -160,7 +139,6 @@ const Model: React.FC<{
     }
   };
 
-  // Apply highlighting to selected part
   React.useEffect(() => {
     if (meshRef.current) {
       meshRef.current.traverse((child: any) => {
@@ -174,10 +152,8 @@ const Model: React.FC<{
                 child.name === selectedPart.name ||
                 (child.parent && child.parent.name === selectedPart.name))) {
 
-              // Create highlighting effect - multiple approaches for different material types
               console.log('Highlighting part:', selectedPart.name, 'Material type:', material.type);
 
-              // Store original properties if not already stored
               if (!material.userData.isHighlighted) {
                 material.userData.originalColor = material.color ? material.color.clone() : null;
                 material.userData.originalEmissive = material.emissive ? material.emissive.clone() : null;
@@ -187,7 +163,6 @@ const Model: React.FC<{
                 material.userData.isHighlighted = true;
               }
 
-              // Method 1: Emissive highlighting (works for Standard/Physical materials)
               if (material.emissive) {
                 material.emissive.setHex(0x0066ff);
                 if ('emissiveIntensity' in material) {
@@ -195,12 +170,9 @@ const Model: React.FC<{
                 }
               }
 
-              // Method 2: Color brightening/tinting (works for most materials)
               if (material.color) {
-                // Apply bright blue tint
                 const originalColor = material.userData.originalColor;
                 if (originalColor) {
-                  // Mix original color with blue highlight
                   material.color.setRGB(
                     Math.min(1, originalColor.r + 0.3),
                     Math.min(1, originalColor.g + 0.3),
@@ -211,17 +183,14 @@ const Model: React.FC<{
                 }
               }
 
-              // Method 3: Make slightly transparent for glow effect
               if ('transparent' in material && 'opacity' in material) {
                 material.transparent = true;
                 material.opacity = 0.9;
               }
 
             } else {
-              // Reset all highlighting effects if this material was highlighted
               if (material.userData.isHighlighted) {
 
-                // Reset emissive
                 if (material.emissive && material.userData.originalEmissive) {
                   material.emissive.copy(material.userData.originalEmissive);
                 } else if (material.emissive) {
@@ -232,12 +201,10 @@ const Model: React.FC<{
                   material.emissiveIntensity = material.userData.originalEmissiveIntensity || 0;
                 }
 
-                // Reset color
                 if (material.color && material.userData.originalColor) {
                   material.color.copy(material.userData.originalColor);
                 }
 
-                // Reset opacity and transparency
                 if ('opacity' in material) {
                   material.opacity = material.userData.originalOpacity || 1;
                 }
@@ -245,7 +212,6 @@ const Model: React.FC<{
                   material.transparent = material.userData.originalTransparent || false;
                 }
 
-                // Clear highlight flags and stored properties
                 delete material.userData.isHighlighted;
                 delete material.userData.originalColor;
                 delete material.userData.originalEmissive;
@@ -274,10 +240,10 @@ const Model: React.FC<{
 
 const LoadingScreen: React.FC = () => (
   <Html center>
-    <div className="flex flex-col items-center space-y-4 p-8 bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-700/50">
-      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      <div className="text-white font-medium">Loading 3D Model...</div>
-      <div className="text-slate-400 text-sm">Processing geometry and materials</div>
+    <div className="flex flex-col items-center space-y-4 p-6 md:p-8 bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-700/50">
+      <div className="w-10 h-10 md:w-12 md:h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="text-white font-medium text-sm md:text-base">Loading 3D Model...</div>
+      <div className="text-slate-400 text-xs md:text-sm">Processing geometry and materials</div>
     </div>
   </Html>
 );
@@ -297,19 +263,16 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
     const size = boundingBox.getSize(new THREE.Vector3());
     const center = boundingBox.getCenter(new THREE.Vector3());
 
-    // Calculate the distance needed to fit the model in view
     const maxDim = Math.max(size.x, size.y, size.z);
-    const fov = cameraRef.current.fov * (Math.PI / 180); // Convert to radians
-    const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 1.2; // Add 20% padding
+    const fov = cameraRef.current.fov * (Math.PI / 180);
+    const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 1.2;
 
-    // Position camera at an angle for better view
     const direction = new THREE.Vector3(1, 1, 1).normalize();
     const position = center.clone().add(direction.multiplyScalar(distance));
 
     cameraRef.current.position.copy(position);
     cameraRef.current.lookAt(center);
 
-    // Update orbit controls target
     if (orbitControlsRef.current) {
       orbitControlsRef.current.target.copy(center);
       orbitControlsRef.current.update();
@@ -321,7 +284,6 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
       cameraRef.current.position.set(...CAMERA_POSITIONS.DEFAULT);
       cameraRef.current.lookAt(0, 0, 0);
 
-      // Reset orbit controls target
       if (orbitControlsRef.current) {
         orbitControlsRef.current.target.set(0, 0, 0);
         orbitControlsRef.current.update();
@@ -340,14 +302,14 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
   return (
     <div className="h-full relative">
       {/* Controls Bar */}
-      <div className="absolute top-6 left-6 right-6 z-10 flex justify-between items-center">
+      <div className="absolute top-4 left-4 right-4 z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex items-center space-x-2 bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 border border-slate-700/50">
           <button
             onClick={resetCamera}
             className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-300 hover:text-white"
             title="Reset Camera"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <div className="w-px h-6 bg-slate-600" />
           <button
@@ -358,7 +320,7 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
               }`}
             title="Toggle Wireframe"
           >
-            <Grid3X3 className="w-5 h-5" />
+            <Grid3X3 className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <button
             onClick={() => setShowGrid(!showGrid)}
@@ -368,7 +330,7 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
               }`}
             title="Toggle Grid"
           >
-            <Eye className="w-5 h-5" />
+            <Eye className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <button
             onClick={() => setShowDebugInfo(!showDebugInfo)}
@@ -378,11 +340,11 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
               }`}
             title="Toggle Debug Info"
           >
-            <Info className="w-5 h-5" />
+            <Info className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
           <div className="flex items-center space-x-2 bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 border border-slate-700/50">
             <select
               value={lighting}
@@ -398,150 +360,158 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
             <Sun className="w-4 h-4 text-slate-400" />
           </div>
 
-          {/* Click Instruction */}
           {model && !selectedPart && (
             <div className="flex items-center space-x-2 bg-blue-500/20 backdrop-blur-sm rounded-xl p-2 border border-blue-500/30">
               <MousePointer className="w-4 h-4 text-blue-400" />
-              <span className="text-blue-400 text-sm">Click on model parts to view details</span>
+              <span className="text-blue-400 text-xs md:text-sm">Click on model parts to view details</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Model Info Panel */}
-      {model && (
-        <div className="absolute top-6 right-6 mt-20 z-10 bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 w-80">
-          <div className="flex items-center space-x-2 mb-3">
-            <Info className="w-5 h-5 text-blue-400" />
-            <h3 className="font-medium text-white">Model Information</h3>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Name:</span>
-              <span className="text-white">{model.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Type:</span>
-              <span className="text-white uppercase">{model.type}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Size:</span>
-              <span className="text-white">{(model.size / 1024 / 1024).toFixed(2)} MB</span>
-            </div>
-            {model.metadata && (
-              <>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Vertices:</span>
-                  <span className="text-white">{model.metadata.vertices?.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Faces:</span>
-                  <span className="text-white">{model.metadata.faces?.toLocaleString()}</span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Debug Panel */}
-      {showDebugInfo && model && (
-        <div className="absolute bottom-6 left-6 z-10 bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 w-80 max-h-60 overflow-y-auto">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <Info className="w-5 h-5 text-yellow-400" />
-              <h3 className="font-medium text-white">Debug Information</h3>
-            </div>
-            <button
-              onClick={() => setShowDebugInfo(false)}
-              className="p-1 hover:bg-slate-700/50 rounded transition-colors text-slate-400 hover:text-white"
-              title="Close Debug Panel"
-            >
-              ×
-            </button>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="text-yellow-400 font-medium">Rendering Settings:</div>
-            <div className="text-slate-300 text-xs space-y-1 ml-2">
-              <div>• Tone Mapping: ACES Filmic</div>
-              <div>• Color Space: sRGB</div>
-              <div>• Shadows: Enabled</div>
-              <div>• Wireframe: {wireframe ? 'On' : 'Off'}</div>
-              <div>• Environment: {lighting}</div>
-            </div>
-            <div className="text-yellow-400 font-medium mt-3">Tips for Color Issues:</div>
-            <div className="text-slate-300 text-xs space-y-1 ml-2">
-              <div>• Ensure GLTF includes embedded textures</div>
-              <div>• Check if model has vertex colors</div>
-              <div>• Try different lighting presets</div>
-              <div>• Toggle wireframe to see geometry</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Selected Part Details Panel */}
-      {selectedPart && (
-        <div className="absolute top-6 right-6 mt-80 z-10 bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 w-80">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <Layers className="w-5 h-5 text-blue-400" />
-              <h3 className="font-medium text-white">Selected Part</h3>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" title="Part highlighted in blue"></div>
-            </div>
-            <button
-              onClick={clearSelection}
-              className="p-1 hover:bg-slate-700/50 rounded transition-colors text-slate-400 hover:text-white"
-              title="Clear Selection"
-            >
-              ×
-            </button>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Name:</span>
-              <span className="text-white">{selectedPart.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Type:</span>
-              <span className="text-white">{selectedPart.type}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Material:</span>
-              <span className="text-white">{selectedPart.material}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Position:</span>
-              <span className="text-white text-xs">
-                ({selectedPart.position.x.toFixed(2)}, {selectedPart.position.y.toFixed(2)}, {selectedPart.position.z.toFixed(2)})
-              </span>
-            </div>
-            {selectedPart.boundingBox && (
-              <div className="flex justify-between">
-                <span className="text-slate-400">Size:</span>
-                <span className="text-white text-xs">
-                  {selectedPart.boundingBox.getSize(new THREE.Vector3()).x.toFixed(2)} × {' '}
-                  {selectedPart.boundingBox.getSize(new THREE.Vector3()).y.toFixed(2)} × {' '}
-                  {selectedPart.boundingBox.getSize(new THREE.Vector3()).z.toFixed(2)}
-                </span>
+      {/* Responsive Info Panels */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Model Info Panel */}
+        {model && (
+          <div className="absolute top-4 right-4 mt-16 lg:mt-20 z-10 w-72 lg:w-80 pointer-events-auto">
+            <div className="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50">
+              <div className="flex items-center space-x-2 mb-3">
+                <Info className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
+                <h3 className="font-medium text-white text-sm md:text-base">Model Information</h3>
               </div>
-            )}
-            {selectedPart.userData && Object.keys(selectedPart.userData).length > 0 && (
-              <div className="mt-3 pt-3 border-t border-slate-600">
-                <span className="text-slate-400 text-xs">Custom Properties:</span>
-                <div className="mt-1 space-y-1">
-                  {Object.entries(selectedPart.userData).map(([key, value]) => (
-                    <div key={key} className="flex justify-between">
-                      <span className="text-slate-400 text-xs">{key}:</span>
-                      <span className="text-white text-xs">{String(value)}</span>
+              <div className="space-y-2 text-xs md:text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Name:</span>
+                  <span className="text-white truncate ml-2">{model.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Type:</span>
+                  <span className="text-white uppercase">{model.type}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Size:</span>
+                  <span className="text-white">{(model.size / 1024 / 1024).toFixed(2)} MB</span>
+                </div>
+                {model.metadata && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Vertices:</span>
+                      <span className="text-white">{model.metadata.vertices?.toLocaleString()}</span>
                     </div>
-                  ))}
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Faces:</span>
+                      <span className="text-white">{model.metadata.faces?.toLocaleString()}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Debug Panel */}
+        {showDebugInfo && model && (
+          <div className="absolute bottom-4 left-4 z-10 w-72 lg:w-80 max-h-60 overflow-y-auto pointer-events-auto">
+            <div className="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <Info className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" />
+                  <h3 className="font-medium text-white text-sm md:text-base">Debug Information</h3>
+                </div>
+                <button
+                  onClick={() => setShowDebugInfo(false)}
+                  className="p-1 hover:bg-slate-700/50 rounded transition-colors text-slate-400 hover:text-white"
+                  title="Close Debug Panel"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="space-y-2 text-xs md:text-sm">
+                <div className="text-yellow-400 font-medium">Rendering Settings:</div>
+                <div className="text-slate-300 text-xs space-y-1 ml-2">
+                  <div>• Tone Mapping: ACES Filmic</div>
+                  <div>• Color Space: sRGB</div>
+                  <div>• Shadows: Enabled</div>
+                  <div>• Wireframe: {wireframe ? 'On' : 'Off'}</div>
+                  <div>• Environment: {lighting}</div>
+                </div>
+                <div className="text-yellow-400 font-medium mt-3">Tips for Color Issues:</div>
+                <div className="text-slate-300 text-xs space-y-1 ml-2">
+                  <div>• Ensure GLTF includes embedded textures</div>
+                  <div>• Check if model has vertex colors</div>
+                  <div>• Try different lighting presets</div>
+                  <div>• Toggle wireframe to see geometry</div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Selected Part Details Panel */}
+        {selectedPart && (
+          <div className="absolute top-4 right-4 mt-80 lg:mt-96 z-10 w-72 lg:w-80 pointer-events-auto">
+            <div className="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <Layers className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
+                  <h3 className="font-medium text-white text-sm md:text-base">Selected Part</h3>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" title="Part highlighted in blue"></div>
+                </div>
+                <button
+                  onClick={clearSelection}
+                  className="p-1 hover:bg-slate-700/50 rounded transition-colors text-slate-400 hover:text-white"
+                  title="Clear Selection"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="space-y-2 text-xs md:text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Name:</span>
+                  <span className="text-white truncate ml-2">{selectedPart.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Type:</span>
+                  <span className="text-white">{selectedPart.type}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Material:</span>
+                  <span className="text-white truncate ml-2">{selectedPart.material}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Position:</span>
+                  <span className="text-white text-xs">
+                    ({selectedPart.position.x.toFixed(2)}, {selectedPart.position.y.toFixed(2)}, {selectedPart.position.z.toFixed(2)})
+                  </span>
+                </div>
+                {selectedPart.boundingBox && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Size:</span>
+                    <span className="text-white text-xs">
+                      {selectedPart.boundingBox.getSize(new THREE.Vector3()).x.toFixed(2)} × {' '}
+                      {selectedPart.boundingBox.getSize(new THREE.Vector3()).y.toFixed(2)} × {' '}
+                      {selectedPart.boundingBox.getSize(new THREE.Vector3()).z.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {selectedPart.userData && Object.keys(selectedPart.userData).length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-slate-600">
+                    <span className="text-slate-400 text-xs">Custom Properties:</span>
+                    <div className="mt-1 space-y-1">
+                      {Object.entries(selectedPart.userData).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-slate-400 text-xs">{key}:</span>
+                          <span className="text-white text-xs truncate ml-2">{String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* 3D Canvas */}
       <div className="h-full bg-gradient-to-b from-slate-900 to-slate-800">
@@ -556,7 +526,6 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
         >
           <PerspectiveCamera ref={cameraRef} makeDefault position={CAMERA_POSITIONS.DEFAULT} />
 
-          {/* Lighting */}
           <ambientLight intensity={0.6} />
           <directionalLight
             position={[10, 10, 5]}
@@ -566,15 +535,12 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
           <pointLight position={[-10, -10, -10]} intensity={0.3} />
           <hemisphereLight args={['#ffffff', '#60a5fa', 0.4]} />
 
-          {/* Environment */}
           <Environment preset={lighting} />
 
-          {/* Grid */}
           {showGrid && (
             <gridHelper args={[GRID_SIZE, GRID_DIVISIONS, GRID_COLOR_PRIMARY, GRID_COLOR_SECONDARY]} />
           )}
 
-          {/* Model */}
           {model ? (
             <Suspense fallback={<LoadingScreen />}>
               <Model
@@ -594,15 +560,14 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
             </Suspense>
           ) : (
             <Html center>
-              <div className="text-center min-w-mc p-8 bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-700/50">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center">
-                  <Eye className="w-8 h-8 text-white" />
+              <div className="text-center min-w-mc p-6 md:p-8 bg-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-700/50">
+                <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center">
+                  <Eye className="w-6 h-6 md:w-8 md:h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">No Model Selected</h3>
-                <p className="text-slate-400 mb-4">Upload a 3D model or select one from the library</p>
+                <h3 className="text-lg md:text-xl font-bold text-white mb-2">No Model Selected</h3>
+                <p className="text-slate-400 mb-4 text-sm md:text-base">Upload a 3D model or select one from the library</p>
 
-                {/* Test Geometry for Color Verification */}
-                <div className="text-left bg-slate-700/50 rounded-lg p-4 text-sm">
+                <div className="text-left bg-slate-700/50 rounded-lg p-4 text-xs md:text-sm">
                   <div className="text-yellow-400 font-medium mb-2">Color Test Objects:</div>
                   <div className="space-y-1 text-slate-300">
                     <div>• Red Cube (Basic Material Test)</div>
@@ -612,7 +577,6 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
                 </div>
               </div>
 
-              {/* Test Geometry */}
               <mesh position={[-2, 0, 0]}>
                 <boxGeometry args={[1, 1, 1]} />
                 <meshStandardMaterial color="#ff4444" />
@@ -628,7 +592,6 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
             </Html>
           )}
 
-          {/* Controls */}
           <OrbitControls
             ref={orbitControlsRef}
             enablePan={true}
@@ -639,7 +602,6 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
             enableDamping={true}
           />
 
-          {/* Performance Stats */}
           <Stats />
         </Canvas>
       </div>

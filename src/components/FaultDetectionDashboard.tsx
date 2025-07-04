@@ -40,6 +40,7 @@ import {
   ModelHealthStatus,
   FaultDetectionStatistics
 } from '../services/faultDetectionService';
+import { palette, responsive } from '../styles/palette';
 
 interface FaultDetectionDashboardProps {
   models: DigitalTwinModel[];
@@ -60,7 +61,6 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    // Subscribe to fault detection updates
     const unsubscribeFaults = faultDetectionService.subscribeToFaults((fault) => {
       setFaults(prev => [fault, ...prev]);
     });
@@ -72,10 +72,8 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
       });
     });
 
-    // Initial data load
     loadInitialData();
 
-    // Periodic updates
     const updateInterval = setInterval(() => {
       updateStatistics();
     }, 10000);
@@ -147,11 +145,11 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <AlertTriangle className="w-4 h-4" />;
-      case 'acknowledged': return <Eye className="w-4 h-4" />;
-      case 'resolved': return <CheckCircle className="w-4 h-4" />;
-      case 'false_positive': return <XCircle className="w-4 h-4" />;
-      default: return <AlertCircle className="w-4 h-4" />;
+      case 'active': return <AlertTriangle className="w-3 h-3 md:w-4 md:h-4" />;
+      case 'acknowledged': return <Eye className="w-3 h-3 md:w-4 md:h-4" />;
+      case 'resolved': return <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />;
+      case 'false_positive': return <XCircle className="w-3 h-3 md:w-4 md:h-4" />;
+      default: return <AlertCircle className="w-3 h-3 md:w-4 md:h-4" />;
     }
   };
 
@@ -179,8 +177,8 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex items-center space-x-2 text-white">
-          <RefreshCw className="w-6 h-6 animate-spin" />
-          <span>Loading fault detection data...</span>
+          <RefreshCw className="w-5 h-5 md:w-6 md:h-6 animate-spin" />
+          <span className="text-sm md:text-base">Loading fault detection data...</span>
         </div>
       </div>
     );
@@ -188,24 +186,24 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
 
   return (
     <div className="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-auto">
-      <div className="p-6 space-y-6">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
               Fault Detection & Diagnostics
             </h1>
-            <p className="text-slate-400">
+            <p className="text-slate-400 text-sm md:text-base">
               Real-time monitoring and analysis across all models
             </p>
           </div>
-          <div className="flex items-center space-x-3">
-            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-              <Download className="w-4 h-4" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm md:text-base">
+              <Download className="w-3 h-3 md:w-4 md:h-4" />
               <span>Export Report</span>
             </button>
-            <button className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors">
-              <Settings className="w-4 h-4" />
+            <button className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-sm md:text-base">
+              <Settings className="w-3 h-3 md:w-4 md:h-4" />
               <span>Configure</span>
             </button>
           </div>
@@ -213,16 +211,16 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
 
         {/* Statistics Overview */}
         {statistics && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">Total Models</p>
-                  <p className="text-2xl font-bold text-white">{statistics.totalModels}</p>
+                  <p className="text-slate-400 text-xs md:text-sm">Total Models</p>
+                  <p className="text-xl md:text-2xl font-bold text-white">{statistics.totalModels}</p>
                 </div>
-                <Shield className="w-8 h-8 text-blue-400" />
+                <Shield className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
               </div>
-              <div className="mt-4 flex items-center space-x-2 text-sm">
+              <div className="mt-4 flex items-center space-x-2 text-xs md:text-sm">
                 <span className="text-green-400">
                   {statistics.healthyModels} healthy
                 </span>
@@ -233,48 +231,48 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
               </div>
             </div>
 
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">Active Faults</p>
-                  <p className="text-2xl font-bold text-red-400">{statistics.activeFaults}</p>
+                  <p className="text-slate-400 text-xs md:text-sm">Active Faults</p>
+                  <p className="text-xl md:text-2xl font-bold text-red-400">{statistics.activeFaults}</p>
                 </div>
-                <AlertTriangle className="w-8 h-8 text-red-400" />
+                <AlertTriangle className="w-6 h-6 md:w-8 md:h-8 text-red-400" />
               </div>
-              <div className="mt-4 flex items-center space-x-2 text-sm">
-                <TrendingUp className="w-4 h-4 text-red-400" />
+              <div className="mt-4 flex items-center space-x-2 text-xs md:text-sm">
+                <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-red-400" />
                 <span className="text-slate-400">
                   {statistics.totalFaults} total detected
                 </span>
               </div>
             </div>
 
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">MTTR</p>
-                  <p className="text-2xl font-bold text-yellow-400">{statistics.mttr}h</p>
+                  <p className="text-slate-400 text-xs md:text-sm">MTTR</p>
+                  <p className="text-xl md:text-2xl font-bold text-yellow-400">{statistics.mttr}h</p>
                 </div>
-                <Clock className="w-8 h-8 text-yellow-400" />
+                <Clock className="w-6 h-6 md:w-8 md:h-8 text-yellow-400" />
               </div>
-              <div className="mt-4 flex items-center space-x-2 text-sm">
-                <TrendingDown className="w-4 h-4 text-green-400" />
+              <div className="mt-4 flex items-center space-x-2 text-xs md:text-sm">
+                <TrendingDown className="w-3 h-3 md:w-4 md:h-4 text-green-400" />
                 <span className="text-slate-400">
                   Avg resolution time
                 </span>
               </div>
             </div>
 
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">MTBF</p>
-                  <p className="text-2xl font-bold text-green-400">{statistics.mtbf}h</p>
+                  <p className="text-slate-400 text-xs md:text-sm">MTBF</p>
+                  <p className="text-xl md:text-2xl font-bold text-green-400">{statistics.mtbf}h</p>
                 </div>
-                <Activity className="w-8 h-8 text-green-400" />
+                <Activity className="w-6 h-6 md:w-8 md:h-8 text-green-400" />
               </div>
-              <div className="mt-4 flex items-center space-x-2 text-sm">
-                <TrendingUp className="w-4 h-4 text-green-400" />
+              <div className="mt-4 flex items-center space-x-2 text-xs md:text-sm">
+                <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-green-400" />
                 <span className="text-slate-400">
                   Mean time between failures
                 </span>
@@ -284,19 +282,19 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
         )}
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
           {/* Model Health Distribution */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Model Health Distribution</h3>
-            <div className="h-64">
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-semibold text-white mb-4">Model Health Distribution</h3>
+            <div className="h-64 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
+                    innerRadius={50}
+                    outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
                   >
@@ -309,7 +307,8 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
                       backgroundColor: '#1e293b',
                       border: '1px solid #334155',
                       borderRadius: '8px',
-                      color: '#fff'
+                      color: '#fff',
+                      fontSize: '12px'
                     }}
                   />
                 </PieChart>
@@ -318,20 +317,21 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
           </div>
 
           {/* Fault Trend */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">24-Hour Fault Trend</h3>
-            <div className="h-64">
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-semibold text-white mb-4">24-Hour Fault Trend</h3>
+            <div className="h-64 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={faultTrendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="hour" stroke="#64748b" />
-                  <YAxis stroke="#64748b" />
+                  <XAxis dataKey="hour" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#1e293b',
                       border: '1px solid #334155',
                       borderRadius: '8px',
-                      color: '#fff'
+                      color: '#fff',
+                      fontSize: '12px'
                     }}
                   />
                   <Area
@@ -357,10 +357,10 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
         </div>
 
         {/* Filters and Fault List */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-white">Active Faults</h3>
-            <div className="flex items-center space-x-4">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <h3 className="text-lg md:text-xl font-semibold text-white">Active Faults</h3>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex items-center space-x-2">
                 <Filter className="w-4 h-4 text-slate-400" />
                 <select
@@ -391,30 +391,30 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {filteredFaults.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
-                <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-400" />
-                <p>No faults match the current filters</p>
+                <CheckCircle className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 text-green-400" />
+                <p className="text-sm md:text-base">No faults match the current filters</p>
               </div>
             ) : (
               filteredFaults.map((fault) => (
                 <div
                   key={fault.id}
-                  className={`p-4 rounded-lg border cursor-pointer transition-all hover:bg-slate-700/30 ${getSeverityColor(fault.severity)}`}
+                  className={`p-3 md:p-4 rounded-lg border cursor-pointer transition-all hover:bg-slate-700/30 ${getSeverityColor(fault.severity)}`}
                   onClick={() => {
                     setSelectedFault(fault);
                     setIsModalOpen(true);
                   }}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-3 mb-2">
                         {getStatusIcon(fault.status)}
-                        <h4 className="font-semibold">{fault.title}</h4>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getSeverityColor(fault.severity)}`}>
+                        <h4 className="font-semibold text-sm md:text-base truncate">{fault.title}</h4>
+                        <span className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${getSeverityColor(fault.severity)}`}>
                           {fault.severity.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-300 mb-2">{fault.description}</p>
-                      <div className="flex items-center space-x-4 text-xs text-slate-400">
+                      <p className="text-xs md:text-sm text-slate-300 mb-2">{fault.description}</p>
+                      <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs text-slate-400">
                         <span>Model: {models.find(m => m.id === fault.modelId)?.name || fault.modelId}</span>
                         <span>•</span>
                         <span>{new Date(fault.detectedAt).toLocaleString()}</span>
@@ -427,7 +427,7 @@ export const FaultDetectionDashboard: React.FC<FaultDetectionDashboardProps> = (
                       </div>
                     </div>
                     {fault.status === 'active' && (
-                      <div className="flex items-center space-x-2 ml-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 ml-4">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

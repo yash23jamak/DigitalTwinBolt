@@ -8,12 +8,14 @@ import { ModelLibrary } from './components/ModelLibrary';
 import { ArcGISMap } from './components/ArcGISMap';
 import { NotificationContainer } from './components/NotificationContainer';
 import { DigitalTwinModel, ViewType } from './types';
+import { palette, responsive } from './styles/palette';
 import './test/notificationTest';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>('viewer');
   const [models, setModels] = useState<DigitalTwinModel[]>([]);
   const [selectedModel, setSelectedModel] = useState<DigitalTwinModel | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleModelUpload = (model: DigitalTwinModel) => {
     // Check if model already exists to prevent duplicates
@@ -58,6 +60,10 @@ function App() {
     }
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="flex h-screen">
@@ -65,12 +71,11 @@ function App() {
           currentView={currentView}
           onViewChange={setCurrentView}
           modelCount={models.length}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
         />
 
-        <main className="flex-1 overflow-hidden relative">
-          {/* TODO: Commented as of now no use
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-teal-500/5" /> */}
-
+        <main className="flex-1 overflow-hidden relative lg:ml-0">
           {currentView === 'viewer' && (
             <ModelViewer
               model={selectedModel}
