@@ -29,3 +29,5 @@ export const rateLimiterMiddleware = async (req: Request, res: Response, next: N
 };
 
 export { rateLimiterMiddleware as rateLimiter };
+
+export { rateLimiter }
