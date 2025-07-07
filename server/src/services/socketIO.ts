@@ -1,15 +1,7 @@
-import { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { logger } from '../utils/logger';
 
-export function setupSocketIO(server: HTTPServer): SocketIOServer {
-  const io = new SocketIOServer(server, {
-    cors: {
-      origin: process.env.FRONTEND_URL || "http://localhost:5173",
-      methods: ["GET", "POST"]
-    }
-  });
-
+export function setupSocketIO(io: SocketIOServer): SocketIOServer {
   io.on('connection', (socket) => {
     logger.info(`Client connected: ${socket.id}`);
 
