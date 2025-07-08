@@ -2,7 +2,6 @@ import { notificationService } from '../../services/notificationService';
 import { logger } from '../../utils/logger';
 import { withFilter } from 'graphql-subscriptions';
 import { PubSub } from 'graphql-subscriptions';
-
 const pubsub = new PubSub();
 
 export const notificationResolvers = {
