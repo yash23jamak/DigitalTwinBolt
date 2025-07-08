@@ -1,5 +1,5 @@
 // GraphQL Upload scalar type for handling file uploads
-// This is a CommonJS module to maintain compatibility with graphql-upload
+// Import from graphql-upload package
 
 const GraphQLUpload = require('graphql-upload/GraphQLUpload.js');
 
