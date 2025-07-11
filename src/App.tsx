@@ -6,13 +6,15 @@ import { FaultDetectionDashboard } from './components/FaultDetectionDashboard';
 import { FileUpload } from './components/FileUpload';
 import { ModelLibrary } from './components/ModelLibrary';
 import { ArcGISMap } from './components/ArcGISMap';
+import { SensorManagement } from './components/SensorManagement';
+import { UserManagement } from './components/UserManagement';
 import { NotificationContainer } from './components/NotificationContainer';
 import { DigitalTwinModel, ViewType } from './types';
 import { palette, responsive } from './styles/palette';
 import './test/notificationTest';
 
 function App() {
-  const [currentView, setCurrentView] = useState<ViewType>('viewer');
+  const [currentView, setCurrentView] = useState<ViewType>('sensors');
   const [models, setModels] = useState<DigitalTwinModel[]>([]);
   const [selectedModel, setSelectedModel] = useState<DigitalTwinModel | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -108,6 +110,12 @@ function App() {
               onModelSelect={handleModelSelect}
               onModelDelete={handleModelDelete}
             />
+          )}
+          {currentView === 'sensors' && (
+            <SensorManagement models={models} />
+          )}
+          {currentView === 'users' && (
+            <UserManagement />
           )}
         </main>
       </div>

@@ -10,12 +10,14 @@ import {
   AlertTriangle,
   Menu,
   X
+  Settings,
+  Users
 } from 'lucide-react';
 import { palette, responsive } from '../styles/palette';
 
 interface SidebarProps {
-  currentView: 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis' | 'faults';
-  onViewChange: (view: 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis' | 'faults') => void;
+  currentView: 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis' | 'faults' | 'sensors' | 'users';
+  onViewChange: (view: 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis' | 'faults' | 'sensors' | 'users') => void;
   modelCount: number;
   isOpen?: boolean;
   onToggle?: () => void;
@@ -33,6 +35,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'gis', label: 'GIS Map', icon: Map, description: 'ArcGIS mapping & geospatial analysis' },
     { id: 'dashboard', label: 'Analytics', icon: BarChart3, description: 'Predictive analysis dashboard' },
     { id: 'faults', label: 'Fault Detection', icon: AlertTriangle, description: 'Real-time fault detection & diagnostics' },
+    { id: 'sensors', label: 'Sensors', icon: Activity, description: 'Manage IoT sensors and devices' },
+    { id: 'users', label: 'Users', icon: Users, description: 'User management and permissions' },
     { id: 'upload', label: 'Upload', icon: Upload, description: 'Upload new models' },
     { id: 'library', label: 'Library', icon: Library, description: `${modelCount} models available` }
   ];

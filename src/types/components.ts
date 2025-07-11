@@ -89,4 +89,4 @@ export type SortField = 'name' | 'uploadDate' | 'size' | 'type';
 export type SortOrder = 'asc' | 'desc';
 export type ViewMode = 'grid' | 'list';
 export type LightingPreset = 'studio' | 'sunset' | 'city';
-export type ViewType = 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis' | 'faults';
+export type ViewType = 'viewer' | 'dashboard' | 'upload' | 'library' | 'gis' | 'faults' | 'sensors' | 'users';
