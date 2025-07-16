@@ -1,5 +1,6 @@
 // Notification System Types
 export interface Notification {
+  read: any;
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
   title: string;

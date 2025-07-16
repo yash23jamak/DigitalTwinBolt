@@ -1,15 +1,24 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar';
-import { ModelViewer } from './components/ModelViewer';
-import { Dashboard } from './components/Dashboard';
-import { FaultDetectionDashboard } from './components/FaultDetectionDashboard';
-import { FileUpload } from './components/FileUpload';
-import { ModelLibrary } from './components/ModelLibrary';
-import { ArcGISMap } from './components/ArcGISMap';
 import { NotificationContainer } from './components/NotificationContainer';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { DigitalTwinModel, ViewType } from './types';
-import { palette, responsive } from './styles/palette';
 import './test/notificationTest';
+
+// Lazy-loaded components
+const ModelViewer = lazy(() => import('./components/ModelViewer').then(module => ({ default: module.ModelViewer })));
+const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })));
+const FaultDetectionDashboard = lazy(() => import('./components/FaultDetectionDashboard').then(module => ({ default: module.FaultDetectionDashboard })));
+const FileUpload = lazy(() => import('./components/FileUpload').then(module => ({ default: module.FileUpload })));
+const ModelLibrary = lazy(() => import('./components/ModelLibrary').then(module => ({ default: module.ModelLibrary })));
+const ArcGISMap = lazy(() => import('./components/ArcGISMap').then(module => ({ default: module.ArcGISMap })));
+
+// Loading component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-full w-full bg-slate-100">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+);
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>('viewer');
@@ -65,57 +74,62 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <div className="flex h-screen">
-        <Sidebar
-          currentView={currentView}
-          onViewChange={setCurrentView}
-          modelCount={models.length}
-          isOpen={sidebarOpen}
-          onToggle={toggleSidebar}
-        />
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+        <div className="flex h-screen">
+          <Sidebar
+            currentView={currentView}
+            onViewChange={setCurrentView}
+            modelCount={models.length}
+            isOpen={sidebarOpen}
+            onToggle={toggleSidebar}
+          />
 
-        <main className="flex-1 overflow-hidden relative lg:ml-0">
-          {currentView === 'viewer' && (
-            <ModelViewer
-              model={selectedModel}
-              models={models}
-              onModelSelect={handleModelSelect}
-            />
-          )}
-          {currentView === 'gis' && (
-            <ArcGISMap
-              models={models}
-              selectedModel={selectedModel}
-              onModelSelect={handleModelSelect}
-              onLocationSelect={handleLocationSelect}
-              onModelUpdate={handleModelUpdate}
-              onModelDelete={handleModelDelete}
-            />
-          )}
-          {currentView === 'dashboard' && (
-            <Dashboard models={models} selectedModel={selectedModel} />
-          )}
-          {currentView === 'faults' && (
-            <FaultDetectionDashboard models={models} selectedModel={selectedModel} />
-          )}
-          {currentView === 'upload' && (
-            <FileUpload onModelUpload={handleModelUpload} />
-          )}
-          {currentView === 'library' && (
-            <ModelLibrary
-              models={models}
-              onModelSelect={handleModelSelect}
-              onModelDelete={handleModelDelete}
-            />
-          )}
-        </main>
+          <main className="flex-1 overflow-hidden relative lg:ml-0">
+            <Suspense fallback={<LoadingFallback />}>
+              {currentView === 'viewer' && (
+                <ModelViewer
+                  model={selectedModel}
+                  models={models}
+                  onModelSelect={handleModelSelect}
+                />
+              )}
+              {currentView === 'gis' && (
+                <ArcGISMap
+                  models={models}
+                  selectedModel={selectedModel}
+                  onModelSelect={handleModelSelect}
+                  onLocationSelect={handleLocationSelect}
+                  onModelUpdate={handleModelUpdate}
+                  onModelDelete={handleModelDelete}
+                />
+              )}
+              {currentView === 'dashboard' && (
+                <Dashboard models={models} selectedModel={selectedModel} />
+              )}
+              {currentView === 'faults' && (
+                <FaultDetectionDashboard models={models} selectedModel={selectedModel} />
+              )}
+              {currentView === 'upload' && (
+                <FileUpload onModelUpload={handleModelUpload} />
+              )}
+              {currentView === 'library' && (
+                <ModelLibrary
+                  models={models}
+                  onModelSelect={handleModelSelect}
+                  onModelDelete={handleModelDelete}
+                />
+              )}
+            </Suspense>
+          </main>
+        </div>
+
+        {/* Global Notification Container */}
+        <NotificationContainer />
       </div>
-
-      {/* Global Notification Container */}
-      <NotificationContainer />
-    </div>
+    </ErrorBoundary>
   );
 }
 
 export default App;
+

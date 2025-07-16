@@ -514,8 +514,13 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
       </div>
 
       {/* 3D Canvas */}
-      <div className="h-full bg-gradient-to-b from-slate-900 to-slate-800">
+      <div
+        className="h-full bg-gradient-to-b from-slate-900 to-slate-800"
+        role="region"
+        aria-label="3D Model Viewer"
+      >
         <Canvas
+          aria-hidden="true" // Mark as hidden since it's not accessible
           shadows
           gl={{
             antialias: true,
@@ -604,6 +609,11 @@ export const ModelViewer: React.FC<ModelViewerProps> = ({ model, models, onModel
 
           <Stats />
         </Canvas>
+
+        {/* Add keyboard controls description for screen readers */}
+        <div className="sr-only">
+          Use arrow keys to rotate the camera. Use + and - keys to zoom in and out.
+        </div>
       </div>
     </div>
   );

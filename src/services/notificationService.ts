@@ -93,6 +93,7 @@ class NotificationService {
       type: 'success',
       title,
       message,
+      read: false,
       ...options
     });
   }
@@ -102,6 +103,7 @@ class NotificationService {
       type: 'error',
       title,
       message,
+      read: false,
       duration: 0, // Errors persist by default
       ...options
     });
@@ -112,6 +114,7 @@ class NotificationService {
       type: 'warning',
       title,
       message,
+      read: false,
       ...options
     });
   }
@@ -121,6 +124,7 @@ class NotificationService {
       type: 'info',
       title,
       message,
+      read: false,
       ...options
     });
   }
@@ -128,3 +132,5 @@ class NotificationService {
 
 // Export singleton instance
 export const notificationService = NotificationService.getInstance();
+
+
