@@ -9,7 +9,7 @@ import {
   Map,
   AlertTriangle,
   Menu,
-  X
+  X,
   Settings,
   Users
 } from 'lucide-react';
