@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { DigitalTwinModel, ModelViewerProps, SelectedPart, LightingPreset } from '../types';
 import { LIGHTING_PRESETS, CAMERA_POSITIONS, GRID_SIZE, GRID_DIVISIONS, GRID_COLOR_PRIMARY, GRID_COLOR_SECONDARY } from '../utils/constants';
-import { palette, responsive } from '../styles/palette';
+// import { palette, responsive } from '../styles/palette';
 import * as THREE from 'three';
 
 const Model: React.FC<{

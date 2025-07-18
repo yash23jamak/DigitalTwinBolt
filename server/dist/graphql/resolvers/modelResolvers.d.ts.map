@@ -1,1 +1,0 @@
-{"version":3,"file":"modelResolvers.d.ts","sourceRoot":"","sources":["../../../src/graphql/resolvers/modelResolvers.ts"],"names":[],"mappings":"AAKA,eAAO,MAAM,cAAc;;oBAEL,GAAG,6BAAsC,GAAG;mBAuB7C,GAAG,UAAU,GAAG;0BAST,GAAG,YAAY,GAAG;;;yBAcnB,GAAG,mBAAmB,GAAG,cAAc,GAAG;yBA8E1C,GAAG,iBAAiB,GAAG;yBAuBvB,GAAG,UAAU,GAAG;0BA0Bf,GAAG,UAAU,GAAG;;CAoC3C,CAAC"}
